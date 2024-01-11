@@ -1,36 +1,33 @@
-name: SSH Tunnel
+name: CI
 
 on:
   push:
-  
+  workflow_dispatch:
+
 jobs:
-  deploy:
-    name: Set up tunnel
-    runs-on: ubuntu-20.04
+  build:
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
     - name: Download ngrok
-      run: |
-        curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-        unzip -o ngrok-stable-linux-amd64.zip  # Add -o option to automatically overwrite files
+      run: Invoke-WebRequest https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
 
-    - name: Configure SSH
-      run: |
-        mkdir -p ~/.ssh
-        echo "" >> ~/.ssh/authorized_keys
-        chmod 755 ~
-        chmod 600 ~/.ssh/authorized_keys
+    - name: Extract ngrok
+      run: Expand-Archive ngrok.zip
 
-    - name: Set up ngrok authentication
-      run: |
-        ./ngrok authtoken 2ao66chIV29fHsvpU9dgapcXZGW_7dNaQuSAWBva5BakFpRo9
-      # Replace 'your-ngrok-auth-token' with your actual ngrok authentication token
+    - name: Authenticate ngrok
+      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
 
-    - name: Setup tunnel
-      uses: joshlarsen/ssh-tunnel-action@main
-      with:
-        timeout: 24h
-        port: 22
+    - name: Enable Terminal Services
+      run: |
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
+
+    - name: Set runneradmin password
+      run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+
+    - name: Create Tunnel
+      run: .\ngrok\ngrok.exe tcp 3389
