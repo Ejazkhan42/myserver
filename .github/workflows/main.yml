@@ -11,7 +11,24 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      
+
+    - name: Download ngrok
+      run: |
+        curl -sO https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+        unzip ngrok-stable-linux-amd64.zip
+
+    - name: Configure SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "" >> ~/.ssh/authorized_keys
+        chmod 755 ~
+        chmod 600 ~/.ssh/authorized_keys
+
+    - name: Set up ngrok authentication
+      run: |
+        ./ngrok authtoken 2ao66chIV29fHsvpU9dgapcXZGW_7dNaQuSAWBva5BakFpRo9
+      # Replace 'your-ngrok-auth-token' with your actual ngrok authentication token
+
     - name: Setup tunnel
       uses: joshlarsen/ssh-tunnel-action@main
       with:
