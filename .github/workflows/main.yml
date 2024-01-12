@@ -13,5 +13,5 @@ jobs:
       run: curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update && sudo apt install ngrok
 
     - name: Auth
-      run: ngrok config add-authtoken 2ao66chIV29fHsvpU9dgapcXZGW_7dNaQuSAWBva5BakFpRo9 | ngrok http --domain=yak-well-horse.ngrok-free.app 80
+      run: ngrok config check
   
