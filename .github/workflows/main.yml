@@ -14,13 +14,11 @@ jobs:
 
     - name: Auth
       run: ngrok config add-authtoken 2ao66chIV29fHsvpU9dgapcXZGW_7dNaQuSAWBva5BakFpRo9
-    - name: port
-      run: ngrok http --domain=yak-well-horse.ngrok-free.app 80
-    - name: port
-      run: ngrok tcp 22
     - name: Add User and Set Password
       run: | 
           sudo useradd -m -s /bin/bash newuser
           echo 'newuser:password' | sudo chpasswd
+    - name: port
+      run: ngrok tcp 22
 
   
