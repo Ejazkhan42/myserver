@@ -1,0 +1,64 @@
+Sub JenkinsPost()
+    Const STR_BOUNDARY As String = "3fbd04f5-b1ed-4060-99b9-fca7ff59c113"
+    Dim sUrl As String
+    Dim sAuthorization As String
+    Dim sFormData As String
+    Dim sFileName As String
+    Dim sPostData As String
+    Dim Script_case As String
+    ' URL to send the request
+    sUrl = "http://test.doingerp.com:8080/job/ORC/job/Dev3/job/Dev3TestCase/buildWithParameters"
+    
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets("Jenkins")
+    Dim lastRow As Long
+    Script_case = ws.Cells(2, 1).Value
+    ' Authorization header
+    sAuthorization = "Basic simple_code"
+    
+    ' Form data
+    sFormData = "--" & STR_BOUNDARY & vbCrLf & _
+                "Content-Disposition: form-data; name=""Scripts_Case""" & vbCrLf & vbCrLf & _
+                Script_case & vbCrLf & _
+                "--" & STR_BOUNDARY & vbCrLf & _
+                "Content-Disposition: form-data; name=""FILE""; filename=""TestData.xlsx""" & vbCrLf & _
+                "Content-Type: application/octet-stream" & vbCrLf & vbCrLf
+    
+    ' File path
+    sFileName = ThisWorkbook.Path & "\TestData.xlsx"
+    
+    ' Read file content
+    Dim nFile As Integer
+    Dim baBuffer() As Byte
+    nFile = FreeFile
+    Open sFileName For Binary Access Read As nFile
+    If LOF(nFile) > 0 Then
+        ReDim baBuffer(0 To LOF(nFile) - 1) As Byte
+        Get nFile, , baBuffer
+        Close nFile
+        sFormData = sFormData & StrConv(baBuffer, vbUnicode) & vbCrLf
+    End If
+    
+    ' Prepare POST data
+    sPostData = sFormData & vbCrLf & "--" & STR_BOUNDARY & "--"
+    
+    ' Send the request
+    With CreateObject("Microsoft.XMLHTTP")
+        .Open "POST", sUrl, False
+        .setRequestHeader "Authorization", sAuthorization
+        .setRequestHeader "Content-Type", "multipart/form-data; boundary=" & STR_BOUNDARY
+        .send pvToByteArray(sPostData)
+        If .status = 201 Then
+            ws.Cells(2, 2).Value = "Running Build"
+        Else
+            ws.Cells(2, 2).Value = "Error"
+        End If
+        MsgBox "This Test Case Running " & Script_case, vbExclamation, "Jenkine Running"
+        
+    End With
+End Sub
+
+Private Function pvToByteArray(sText As String) As Byte()
+    pvToByteArray = StrConv(sText, vbFromUnicode)
+End Function
+
